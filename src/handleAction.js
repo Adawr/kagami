@@ -32,26 +32,26 @@ const resources = {
 
 // job specific values
 const monkPositionals = [
-  53, // 連撃
-  56, // 崩拳
-  54, // 正拳突き
-  74, // 双竜脚
-  61, // 双掌打
-  66, // 破砕拳
+  56, // 崩拳 Snap Punch
+  66, // 破砕拳 Demolish
 ]
 const dragoonPositionals = [
-  88,
-  79,
-  3554,
-  3556,
+  88, // Chaos Thrust
+  79, // Heavy Thrust
+  3554, // Fang and Claw
+  3556, // Wheeling Thrust
 ]
 const ninjaPositionals = [
-  2255, // 旋風刃
-  3563, // 強甲破点突
+  2255, // 旋風刃 Aeolian Edge
+  3563, // 強甲破点突 Armor Crush
 ]
 const samuraiPositionals = [
-  7481, // 月光 23D
-  7482, // 花車 43D
+  7481, // 月光 23D Gekko
+  7482, // 花車 43D Kasha
+]
+const reaperPositionals = [
+  24382, // Gibbet
+  24383, // Gallows
 ]
 
 export const cleanup = () => {
@@ -197,7 +197,7 @@ const checkPositional = (action, logParameter) => {
     return logParameter.slice(8, 22).includes(succeedCode)
   }
   if (action.actionID === 2258) {
-    // だまし討ち
+    // だまし討ち / Trick Attack
     resources.positionalActionCount++
 
     const succeedCode = '1E71' // 1E710003 1E710203 1E710303
@@ -207,15 +207,19 @@ const checkPositional = (action, logParameter) => {
   if (samuraiPositionals.includes(action.actionID)) {
     // samurai rear/flank check
     resources.positionalActionCount++
-    const comboCode = '4F71' // 4F710*03
-    if (logParameter[6].includes(comboCode)) { // combo bonus.
-      // eval kenki
-      resources.samurai.action = action
-      resources.samurai.checkPositional = true
-      return true
-      // this will always return true, continue check on handleJobGauge()
-    }
-    return false
+
+    const succeedCode = '4871' // 48710003 48710103 48710203
+    // failedCode: 44710103 44710203
+    return logParameter[6].includes(succeedCode)
+  }
+  if (reaperPositionals.includes(action.actionID)) {
+    // reaper rear/flank check
+    resources.positionalActionCount++
+
+    const succeedCode1 = 'B710' // B710003 B710103
+    const succeedCode2 = 'D710' // D710003 D710103
+    // failedCode: 710003 710003
+    return logParameter[6].includes(succeedCode1) + logParameter[6].includes(succeedCode2)
   }
 
   return true
@@ -338,7 +342,7 @@ export const handleAction = async (primaryCharacter, logCode, logTimestamp, logP
   }
 
   // check invalid actionID
-  if (actionID > 21000) {
+  if (actionID > 26000) {
     if (actionID > 0x4000000) {
       // mount icons: 59000 ~ 59399 (266 total)
       const mountID = action.actionID & 0xffffff
